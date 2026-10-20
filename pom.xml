@@ -1214,7 +1214,8 @@ SPDX-License-Identifier: MIT
                                 <useJspecify>true</useJspecify>
                             </configOptions>
                             <!-- All common models from common-schemas.yaml here, comma separated -->
-                            <importMappings>TileLayerHiDpiMode=org.tailormap.api.persistence.json.TileLayerHiDpiMode,
+                            <importMappings>AttributeDisplayType=org.tailormap.api.persistence.json.AttributeDisplayType,
+                                TileLayerHiDpiMode=org.tailormap.api.persistence.json.TileLayerHiDpiMode,
                                 GeoServiceProtocol=org.tailormap.api.persistence.json.GeoServiceProtocol,
                                 Bounds=org.tailormap.api.persistence.json.Bounds,
                                 BoundsWithCRS=org.tailormap.api.persistence.json.BoundsWithCRS,

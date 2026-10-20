@@ -336,6 +336,8 @@ components:
       type: object
       description: 'presentation metadata for a feature'
       properties:
+        displayType:
+          $ref: './common-schemas.yaml#/components/schemas/AttributeDisplayType'
         name:
           description: 'Name of the attribute.'
           type: string

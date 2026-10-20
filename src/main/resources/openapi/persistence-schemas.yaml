@@ -292,6 +292,8 @@ components:
 
     AttributeSettings:
       properties:
+        displayType:
+          $ref: './common-schemas.yaml#/components/schemas/AttributeDisplayType'
         title:
           type: string
           description: Display title for labels etc.
@@ -635,6 +637,11 @@ components:
 
     AppLayerSettings:
       properties:
+        attributeDisplayOverrides:
+          description: Attribute presentation overrides for this application layer. Omit an attribute to inherit its catalog setting. Hidden attributes remain hidden.
+          type: object
+          additionalProperties:
+            $ref: './common-schemas.yaml#/components/schemas/AttributeDisplayType'
         title:
           nullable: true
           type: string
