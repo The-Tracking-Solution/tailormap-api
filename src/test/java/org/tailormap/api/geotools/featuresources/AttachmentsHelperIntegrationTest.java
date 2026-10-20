@@ -7,7 +7,9 @@ package org.tailormap.api.geotools.featuresources;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.fail;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 import static org.junit.jupiter.params.provider.Arguments.arguments;
 
 import jakarta.validation.constraints.NotNull;
@@ -177,6 +179,27 @@ class AttachmentsHelperIntegrationTest {
       }
     } catch (Exception e) {
       fail(e.getMessage());
+    }
+  }
+
+  @Order(1)
+  @Test
+  void existing_postgis_attachment_storage_can_be_checked_in_a_read_only_session() throws Exception {
+    assumeTrue(featureSourceTitle.startsWith("PostGIS"));
+    AttachmentsHelper.createAttachmentTableForFeatureType(featureType);
+    try (Connection conn = ds.getDataSource().getConnection();
+        Statement stmt = conn.createStatement()) {
+      stmt.execute("SET default_transaction_read_only = on");
+      try {
+        // Even IF NOT EXISTS fails on a replica when the table already exists.
+        assertThrows(
+            SQLException.class,
+            () -> stmt.execute("CREATE TABLE IF NOT EXISTS " + schemaPrefix + featureTypeName
+                + "_attachments (id integer)"));
+        AttachmentsHelper.ensureAttachmentTable(featureType, ds, conn);
+      } finally {
+        stmt.execute("SET default_transaction_read_only = off");
+      }
     }
   }
 

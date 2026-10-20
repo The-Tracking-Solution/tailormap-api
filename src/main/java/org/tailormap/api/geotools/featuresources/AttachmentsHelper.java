@@ -174,23 +174,73 @@ CREATED_BY      VARCHAR2(255) NOT NULL)
     try {
       ds = (JDBCDataStore) new JDBCFeatureSourceHelper().createDataStore(featureType.getFeatureSource());
 
-      try (Connection conn = ds.getDataSource().getConnection();
-          Statement stmt = conn.createStatement()) {
-        String sql = getCreateAttachmentsForFeatureTypeStatements(featureType, ds);
-        logger.debug("About to create attachments table using statement:\n{}", sql);
-        stmt.execute(sql);
-        logger.info("Attachment table created for FeatureType: {}", featureType.getName());
-
-        sql = getCreateAttachmentsIndexForFeatureTypeStatements(featureType, ds);
-        logger.debug("About to create attachments table FK index using statement:\n{}", sql);
-        stmt.execute(sql);
-        logger.info("Attachment table FK index created for FeatureType: {}", featureType.getName());
+      try (Connection conn = ds.getDataSource().getConnection()) {
+        ensureAttachmentTable(featureType, ds, conn);
       }
     } finally {
       if (ds != null) {
         ds.dispose();
       }
     }
+  }
+
+  /** Avoid DDL on existing attachment storage, including when the source is a read-only replica. */
+  static void ensureAttachmentTable(TMFeatureType featureType, JDBCDataStore ds, Connection conn)
+      throws SQLException, IOException {
+    String tableName = featureType.getName() + "_attachments";
+    String indexName = featureType.getName() + "_attachments_fk";
+    if (featureType.getFeatureSource().getJdbcConnection().getDbtype()
+        == JDBCConnectionProperties.DbtypeEnum.ORACLE) {
+      tableName = tableName.toUpperCase(Locale.ROOT);
+      indexName = indexName.toUpperCase(Locale.ROOT);
+    }
+    DatabaseMetaData metadata = conn.getMetaData();
+    String schema = ds.getDatabaseSchema();
+    if (schema == null || schema.isEmpty()) {
+      schema = conn.getSchema();
+    }
+    boolean tableExists;
+    // JDBC table names are search patterns: underscores in our suffix must be escaped.
+    String escape = metadata.getSearchStringEscape();
+    try (ResultSet tables = metadata.getTables(
+        conn.getCatalog(),
+        escapeMetadataPattern(schema, escape),
+        escapeMetadataPattern(tableName, escape),
+        new String[] {"TABLE"})) {
+      tableExists = false;
+      while (tables.next()) {
+        if (tableName.equals(tables.getString("TABLE_NAME"))) {
+          tableExists = true;
+          break;
+        }
+      }
+    }
+    if (!tableExists) {
+      try (Statement stmt = conn.createStatement()) {
+        stmt.execute(getCreateAttachmentsForFeatureTypeStatements(featureType, ds));
+        logger.info("Attachment table created for FeatureType: {}", featureType.getName());
+      }
+    }
+
+    // getIndexInfo takes an exact table name, not a search pattern.
+    try (ResultSet indexes = metadata.getIndexInfo(conn.getCatalog(), schema, tableName, false, false)) {
+      while (indexes.next()) {
+        if (indexName.equals(indexes.getString("INDEX_NAME"))) {
+          return;
+        }
+      }
+    }
+    try (Statement stmt = conn.createStatement()) {
+      stmt.execute(getCreateAttachmentsIndexForFeatureTypeStatements(featureType, ds));
+      logger.info("Attachment table FK index created for FeatureType: {}", featureType.getName());
+    }
+  }
+
+  private static String escapeMetadataPattern(String value, String escape) {
+    if (value == null || escape == null || escape.isEmpty()) {
+      return value;
+    }
+    return value.replace(escape, escape + escape).replace("_", escape + "_").replace("%", escape + "%");
   }
 
   public static void dropAttachmentTableForFeatureType(TMFeatureType featureType) throws IOException, SQLException {
