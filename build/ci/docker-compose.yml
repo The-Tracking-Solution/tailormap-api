@@ -23,7 +23,7 @@ networks:
 services:
   postgres:
     container_name: postgres
-    image: postgis/postgis:18-3.6
+    image: postgis/postgis:18-3.7
     command:
      - "-c"
      - "max_connections=200"
@@ -125,7 +125,7 @@ services:
     image: ghcr.io/tailormap/solr:snapshot
     environment:
       TZ: Europe/Amsterdam
-      SOLR_OPTS: '$SOLR_OPTS -Dsolr.environment=dev,label=Tailormap+Development,color=#6236FF'
+      SOLR_OPTS: '${SOLR_OPTS:-} -XX:-UseBASE64Intrinsics -Dsolr.environment=dev,label=Tailormap+Development,color=#6236FF'
       SOLR_CLOUD_STARTUP_DELETE_UNKNOWN_CORES_ENABLED: true
       SOLR_MODE: user-managed
     volumes:
@@ -147,7 +147,7 @@ services:
 
   prometheus:
     container_name: prometheus
-    image: prom/prometheus:v3.15.0
+    image: prom/prometheus:v3.16.0
     environment:
       TZ: Europe/Amsterdam
       # Prometheus scrape/configuration file is created on startup from this environment variable
