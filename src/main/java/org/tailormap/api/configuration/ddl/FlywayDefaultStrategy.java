@@ -6,10 +6,10 @@
 
 package org.tailormap.api.configuration.ddl;
 
-import org.tailormap.api.configuration.TtsStartPositionMigrations;
 import org.springframework.boot.flyway.autoconfigure.FlywayMigrationStrategy;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.tailormap.api.configuration.TtsStartPositionMigrations;
 
 @Configuration
 public class FlywayDefaultStrategy {

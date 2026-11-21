@@ -17,6 +17,7 @@ import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.tailormap.api.persistence.Application;
 import org.tailormap.api.persistence.GeoService;
@@ -58,8 +59,7 @@ public class AuthorisationService {
   }
 
   /** Evaluate a local account without replacing the administrator's authentication context. */
-  public boolean userAllowedToViewApplication(Application application,
-      org.springframework.security.core.userdetails.UserDetails user) {
+  public boolean userAllowedToViewApplication(Application application, UserDetails user) {
     Set<String> groups = new HashSet<>(Set.of(Group.ANONYMOUS, Group.AUTHENTICATED));
     user.getAuthorities().forEach(authority -> groups.add(authority.getAuthority()));
     return isAuthorizedByRules(application.getAuthorizationRules(), groups)
