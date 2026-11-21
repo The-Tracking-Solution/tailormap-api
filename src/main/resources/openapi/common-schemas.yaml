@@ -26,6 +26,13 @@ paths: { }
 
 components:
   schemas:
+    AttributeDisplayType:
+      description: Presentation of an attribute in feature info. Does not change its data type or editability.
+      type: string
+      enum:
+        - text
+        - video
+
     GeoServiceProtocol:
       type: string
       description: Note that the values are case-insensitive and that `legend` is a pseudo-protocol for proxying legend requests.

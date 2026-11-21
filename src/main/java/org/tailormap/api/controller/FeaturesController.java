@@ -507,6 +507,7 @@ public class FeaturesController implements Constants {
                     .attributeDescriptor()
                     .getName())
                 .alias(attributeWithSettings.settings().getTitle())
+                .displayType(attributeWithSettings.displayType())
                 .type(isGeometry(type) ? TMAttributeType.GEOMETRY : type);
           })
           .forEach(featuresResponse::addColumnMetadataItem);

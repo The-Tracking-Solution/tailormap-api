@@ -23,8 +23,10 @@ import org.tailormap.api.persistence.TMFeatureType;
 import org.tailormap.api.persistence.json.AppLayerSettings;
 import org.tailormap.api.persistence.json.AppTreeLayerNode;
 import org.tailormap.api.persistence.json.AttachmentAttributeType;
+import org.tailormap.api.persistence.json.AttributeDisplayType;
 import org.tailormap.api.persistence.json.AttributeSettings;
 import org.tailormap.api.persistence.json.TMAttributeDescriptor;
+import org.tailormap.api.persistence.json.TMAttributeType;
 
 @Service
 public class TMFeatureTypeHelper {
@@ -77,7 +79,8 @@ public class TMFeatureTypeHelper {
     return editableAttributes;
   }
 
-  public record AttributeWithSettings(TMAttributeDescriptor attributeDescriptor, AttributeSettings settings) {}
+  public record AttributeWithSettings(
+      TMAttributeDescriptor attributeDescriptor, AttributeSettings settings, AttributeDisplayType displayType) {}
 
   /**
    * Return a map of attribute names (in order, using a LinkedHashMap implementation) to an attribute descriptor with
@@ -122,7 +125,14 @@ public class TMFeatureTypeHelper {
       AttributeSettings settings =
           Optional.ofNullable(attributeSettings.get(attribute)).orElseGet(AttributeSettings::new);
       TMAttributeDescriptor attributeDescriptor = originalAttributesOrder.get(attribute);
-      result.put(attribute, new AttributeWithSettings(attributeDescriptor, settings));
+      AttributeDisplayType displayType = Optional.ofNullable(appLayerSettings.getAttributeDisplayOverrides())
+          .map(overrides -> overrides.get(attribute))
+          .orElse(settings.getDisplayType());
+      // Only string attributes can contain video URLs. Presentation never changes visibility or editability.
+      if (displayType == null || attributeDescriptor.getType() != TMAttributeType.STRING) {
+        displayType = AttributeDisplayType.TEXT;
+      }
+      result.put(attribute, new AttributeWithSettings(attributeDescriptor, settings, displayType));
     }
     return result;
   }
