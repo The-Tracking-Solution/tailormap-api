@@ -43,23 +43,34 @@ class PersonalStartExtentServiceTest {
   @Test
   void acceptsCenterAndFractionalZoomAndAdminPermissionWithoutPosition() {
     assertDoesNotThrow(() -> PersonalStartExtentService.validate(application, position(), false));
-    assertDoesNotThrow(() -> PersonalStartExtentService.validate(application,
-        new PersonalStartExtent().crs("EPSG:3857").mayEdit(true), true));
+    assertDoesNotThrow(() -> PersonalStartExtentService.validate(
+        application, new PersonalStartExtent().crs("EPSG:3857").mayEdit(true), true));
   }
 
   @Test
   void rejectsPartialAndNonfinitePositionsAndOutOfRangeZoom() {
     for (PersonalStartExtent p : List.of(
-        position().center(List.of(1.0)), position().center(Arrays.asList(null, 2.0)),
-        position().center(List.of(Double.NaN, 2.0)), position().zoom(Double.POSITIVE_INFINITY),
-        position().zoom(-1.0), position().zoom(28.01), position().zoom(null), position().center(null),
+        position().center(List.of(1.0)),
+        position().center(Arrays.asList(null, 2.0)),
+        position().center(List.of(Double.NaN, 2.0)),
+        position().zoom(Double.POSITIVE_INFINITY),
+        position().zoom(-1.0),
+        position().zoom(28.01),
+        position().zoom(null),
+        position().center(null),
         position().crs("EPSG:28992"))) {
-      assertEquals(HttpStatus.BAD_REQUEST, assertThrows(ResponseStatusException.class,
-          () -> PersonalStartExtentService.validate(application, p, true)).getStatusCode());
+      assertEquals(
+          HttpStatus.BAD_REQUEST,
+          assertThrows(
+                  ResponseStatusException.class,
+                  () -> PersonalStartExtentService.validate(application, p, true))
+              .getStatusCode());
     }
     assertThrows(ResponseStatusException.class, () -> PersonalStartExtentService.validate(application, null, true));
-    assertThrows(ResponseStatusException.class, () -> PersonalStartExtentService.validate(application,
-        new PersonalStartExtent().crs("EPSG:3857"), false));
+    assertThrows(
+        ResponseStatusException.class,
+        () -> PersonalStartExtentService.validate(
+            application, new PersonalStartExtent().crs("EPSG:3857"), false));
   }
 
   @Test
@@ -76,11 +87,15 @@ class PersonalStartExtentServiceTest {
   @Test
   void anonymousAndOidcCannotResolveLocalAccountWithSameName() {
     assertThrows(ResponseStatusException.class, () -> PersonalStartExtentService.localUsername(null));
-    assertThrows(ResponseStatusException.class, () -> PersonalStartExtentService.localUsername(
-        new UsernamePasswordAuthenticationToken("alice", "unused")));
+    assertThrows(
+        ResponseStatusException.class,
+        () -> PersonalStartExtentService.localUsername(
+            new UsernamePasswordAuthenticationToken("alice", "unused")));
     Authentication oidc = UsernamePasswordAuthenticationToken.authenticated(mock(OidcUser.class), null, List.of());
-    assertEquals(HttpStatus.FORBIDDEN, assertThrows(ResponseStatusException.class,
-        () -> PersonalStartExtentService.localUsername(oidc)).getStatusCode());
+    assertEquals(
+        HttpStatus.FORBIDDEN,
+        assertThrows(ResponseStatusException.class, () -> PersonalStartExtentService.localUsername(oidc))
+            .getStatusCode());
   }
 
   @Test
@@ -90,8 +105,13 @@ class PersonalStartExtentServiceTest {
     JdbcClient.StatementSpec statement = mock(JdbcClient.StatementSpec.class, RETURNS_SELF);
     when(jdbc.sql(anyString())).thenReturn(statement);
     when(statement.update()).thenReturn(0);
-    assertEquals(HttpStatus.FORBIDDEN, assertThrows(ResponseStatusException.class,
-        () -> service.save(application, local(), position().mayEdit(true))).getStatusCode());
+    assertEquals(
+        HttpStatus.FORBIDDEN,
+        assertThrows(
+                ResponseStatusException.class,
+                () -> service.save(
+                    application, local(), position().mayEdit(true)))
+            .getStatusCode());
     verify(jdbc).sql(contains("AND may_edit=true"));
     verify(statement, never()).param(eq("edit"), any());
   }
@@ -113,27 +133,43 @@ class PersonalStartExtentServiceTest {
   @Test
   void adminCannotStoreSettingsForNonexistentLocalAccount() {
     when(users.findById("missing")).thenReturn(Optional.empty());
-    assertEquals(HttpStatus.NOT_FOUND, assertThrows(ResponseStatusException.class,
-        () -> service.saveForUser(application, "missing", position())).getStatusCode());
+    assertEquals(
+        HttpStatus.NOT_FOUND,
+        assertThrows(
+                ResponseStatusException.class,
+                () -> service.saveForUser(application, "missing", position()))
+            .getStatusCode());
     verifyNoInteractions(jdbc);
   }
 
   @Test
   void acceptsRectangleButRejectsMixedMalformedOrNonfiniteModes() {
-    PersonalStartExtent rectangle = new PersonalStartExtent().crs("EPSG:3857").center(null)
-        .extent(List.of(1.0, 2.0, 3.0, 4.0));
+    PersonalStartExtent rectangle =
+        new PersonalStartExtent().crs("EPSG:3857").center(null).extent(List.of(1.0, 2.0, 3.0, 4.0));
     assertDoesNotThrow(() -> PersonalStartExtentService.validate(application, rectangle, false));
-    for (List<Double> extent : List.of(List.of(3.0, 2.0, 1.0, 4.0), List.of(1.0, 2.0, 3.0),
-        List.of(Double.NaN, 2.0, 3.0, 4.0))) {
-      assertThrows(ResponseStatusException.class, () -> PersonalStartExtentService.validate(application,
-          new PersonalStartExtent().crs("EPSG:3857").center(null).extent(extent), true));
+    for (List<Double> extent :
+        List.of(List.of(3.0, 2.0, 1.0, 4.0), List.of(1.0, 2.0, 3.0), List.of(Double.NaN, 2.0, 3.0, 4.0))) {
+      assertThrows(
+          ResponseStatusException.class,
+          () -> PersonalStartExtentService.validate(
+              application,
+              new PersonalStartExtent()
+                  .crs("EPSG:3857")
+                  .center(null)
+                  .extent(extent),
+              true));
     }
-    assertThrows(ResponseStatusException.class, () -> PersonalStartExtentService.validate(application,
-        position().extent(List.of(1.0, 2.0, 3.0, 4.0)), false));
+    assertThrows(
+        ResponseStatusException.class,
+        () -> PersonalStartExtentService.validate(
+            application, position().extent(List.of(1.0, 2.0, 3.0, 4.0)), false));
   }
 
   private PersonalStartExtent position() {
-    return new PersonalStartExtent().crs("EPSG:3857").center(List.of(100.0, 200.0)).zoom(12.5);
+    return new PersonalStartExtent()
+        .crs("EPSG:3857")
+        .center(List.of(100.0, 200.0))
+        .zoom(12.5);
   }
 
   private Authentication local() {

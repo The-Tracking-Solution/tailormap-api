@@ -3,6 +3,7 @@ package org.tailormap.api.configuration;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.HashSet;
 import java.util.Set;
 import javax.sql.DataSource;
@@ -24,27 +25,33 @@ public final class TtsStartPositionMigrations {
   }
 
   static Flyway configured(DataSource dataSource, boolean adopted) {
-    return Flyway.configure().dataSource(dataSource)
+    return Flyway.configure()
+        .dataSource(dataSource)
         .locations("classpath:db/tts-start")
-        .defaultSchema("tts_start").schemas("tts_start")
-        .table("flyway_schema_history").cleanDisabled(true)
-        .baselineOnMigrate(adopted).baselineVersion("0")
+        .defaultSchema("tts_start")
+        .schemas("tts_start")
+        .table("flyway_schema_history")
+        .cleanDisabled(true)
+        .baselineOnMigrate(adopted)
+        .baselineVersion("0")
         .load();
   }
 
   static boolean inspectSchema(DataSource dataSource) {
     try (Connection connection = dataSource.getConnection()) {
       Set<String> tables = new HashSet<>();
-      try (ResultSet rows = connection.getMetaData().getTables(null, "tts\\_start", "%", new String[] {"TABLE"})) {
+      try (ResultSet rows =
+          connection.getMetaData().getTables(null, "tts\\_start", "%", new String[] {"TABLE"})) {
         while (rows.next()) tables.add(rows.getString("TABLE_NAME"));
       }
       if (tables.contains("flyway_schema_history") || tables.isEmpty()) return false;
       if (!tables.equals(Set.of("user_start_position", "user_start_extent", "legacy_migration_history"))) {
-        throw new IllegalStateException("Untracked tts_start objects: run the validated adoption procedure first");
+        throw new IllegalStateException(
+            "Untracked tts_start objects: run the validated adoption procedure first");
       }
       Set<String> legacy = new HashSet<>();
       int legacyCount = 0;
-      try (java.sql.Statement statement = connection.createStatement();
+      try (Statement statement = connection.createStatement();
           ResultSet rows = statement.executeQuery(
               "SELECT version,script,checksum FROM tts_start.legacy_migration_history")) {
         while (rows.next()) {

@@ -31,23 +31,39 @@ class PersonalStartPositionAdminControllerTest {
       new PersonalStartPositionAdminController(applications, positions, users, new AuthorisationService());
 
   @AfterEach
-  void clearContext() { SecurityContextHolder.clearContext(); }
+  void clearContext() {
+    SecurityContextHolder.clearContext();
+  }
 
   @Test
   void listsOnlyApplicationsAllowedForTargetUserEvenThoughCurrentAdminCanAccessEverything() {
-    SecurityContextHolder.getContext().setAuthentication(UsernamePasswordAuthenticationToken.authenticated(
-        "admin", null, List.of(() -> "admin")));
-    when(users.loadUserByUsername("alice")).thenReturn(User.withUsername("alice").password("unused").authorities("customer").build());
+    SecurityContextHolder.getContext()
+        .setAuthentication(
+            UsernamePasswordAuthenticationToken.authenticated("admin", null, List.of(() -> "admin")));
+    when(users.loadUserByUsername("alice"))
+        .thenReturn(User.withUsername("alice")
+            .password("unused")
+            .authorities("customer")
+            .build());
     Application allowed = app(1L, "allowed", "customer");
     Application denied = app(2L, "denied", "other-customer");
     when(applications.findAll()).thenReturn(List.of(denied, allowed));
-    assertEquals(List.of("allowed"), controller.applications("alice").getBody().stream().map(PersonalStartPositionAdminController.StartApplication::name).toList());
-    assertEquals("admin", SecurityContextHolder.getContext().getAuthentication().getName());
+    assertEquals(
+        List.of("allowed"),
+        controller.applications("alice").getBody().stream()
+            .map(PersonalStartPositionAdminController.StartApplication::name)
+            .toList());
+    assertEquals(
+        "admin", SecurityContextHolder.getContext().getAuthentication().getName());
   }
 
   @Test
   void directPreferenceReadAndWriteCannotBypassTargetUserApplicationAccess() {
-    when(users.loadUserByUsername("alice")).thenReturn(User.withUsername("alice").password("unused").authorities("customer").build());
+    when(users.loadUserByUsername("alice"))
+        .thenReturn(User.withUsername("alice")
+            .password("unused")
+            .authorities("customer")
+            .build());
     when(applications.findById(2L)).thenReturn(Optional.of(app(2L, "denied", "other")));
     assertThrows(ResponseStatusException.class, () -> controller.get(2L, "alice"));
     assertThrows(ResponseStatusException.class, () -> controller.save(2L, "alice", null));
@@ -56,13 +72,23 @@ class PersonalStartPositionAdminControllerTest {
 
   @Test
   void authenticatedAndAnonymousApplicationRulesAreIncludedForLocalUsers() {
-    when(users.loadUserByUsername("alice")).thenReturn(User.withUsername("alice").password("unused").authorities("customer").build());
-    when(applications.findAll()).thenReturn(List.of(app(1L, "public", "anonymous"), app(2L, "members", "authenticated")));
+    when(users.loadUserByUsername("alice"))
+        .thenReturn(User.withUsername("alice")
+            .password("unused")
+            .authorities("customer")
+            .build());
+    when(applications.findAll())
+        .thenReturn(List.of(app(1L, "public", "anonymous"), app(2L, "members", "authenticated")));
     assertEquals(2, controller.applications("alice").getBody().size());
   }
 
   private Application app(Long id, String name, String group) {
-    return new Application().setId(id).setName(name).setCrs("EPSG:3857").setAuthorizationRules(List.of(
-        new AuthorizationRule().groupName(group).decisions(Map.of("read", AuthorizationRuleDecision.ALLOW))));
+    return new Application()
+        .setId(id)
+        .setName(name)
+        .setCrs("EPSG:3857")
+        .setAuthorizationRules(List.of(new AuthorizationRule()
+            .groupName(group)
+            .decisions(Map.of("read", AuthorizationRuleDecision.ALLOW))));
   }
 }
