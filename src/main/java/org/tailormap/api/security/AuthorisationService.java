@@ -54,6 +54,19 @@ public class AuthorisationService {
         groups.add(authority.getAuthority());
       }
     }
+    return isAuthorizedByRules(rules, groups);
+  }
+
+  /** Evaluate a local account without replacing the administrator's authentication context. */
+  public boolean userAllowedToViewApplication(Application application,
+      org.springframework.security.core.userdetails.UserDetails user) {
+    Set<String> groups = new HashSet<>(Set.of(Group.ANONYMOUS, Group.AUTHENTICATED));
+    user.getAuthorities().forEach(authority -> groups.add(authority.getAuthority()));
+    return isAuthorizedByRules(application.getAuthorizationRules(), groups)
+        .equals(Optional.of(AuthorizationRuleDecision.ALLOW));
+  }
+
+  private Optional<AuthorizationRuleDecision> isAuthorizedByRules(List<AuthorizationRule> rules, Set<String> groups) {
     logger.trace("Groups to check rules against: {}", groups);
 
     // Admins are allowed access to anything.

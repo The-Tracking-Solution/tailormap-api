@@ -397,6 +397,55 @@ components:
       $ref: './viewer-schemas.yaml#/components/schemas/Drawing'
 
 paths:
+  /app/{viewerName}/user/start-extent:
+    parameters:
+      - name: viewerName
+        in: path
+        required: true
+        schema:
+          type: string
+    get:
+      operationId: getPersonalStartExtent
+      description: Read the local user's administrator-controlled start position and mayEdit permission. Requires application access. A disabled personalStartPositionEnabled returns an empty position and mayEdit=false. A position in a previous application CRS is ignored.
+      responses:
+        '200':
+          description: Current position and edit permission; center and zoom are null if unset. Never cache across users.
+          content:
+            application/json:
+              schema:
+                $ref: './viewer-schemas.yaml#/components/schemas/PersonalStartExtent'
+        '403':
+          description: Feature disabled, external identity or user is not allowed to modify their position.
+        '401':
+          description: Authentication or application access required.
+    put:
+      operationId: savePersonalStartExtent
+      description: Replace the local user's center and zoom only if the application is enabled and an administrator granted mayEdit. The request mayEdit value is ignored. CSRF protection applies.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: './viewer-schemas.yaml#/components/schemas/PersonalStartExtent'
+      responses:
+        '204':
+          description: Saved.
+        '400':
+          description: Invalid center, zoom or application CRS mismatch.
+        '403':
+          description: Feature disabled, external identity or user is not allowed to modify their position.
+        '401':
+          description: Authentication or application access required.
+    delete:
+      operationId: deletePersonalStartExtent
+      description: Clear the local user's position without changing their edit permission. Requires an enabled application and mayEdit. CSRF protection applies.
+      responses:
+        '204':
+          description: Deleted, or already absent.
+        '403':
+          description: Feature disabled, external identity or user is not allowed to modify their position.
+        '401':
+          description: Authentication or application access required.
   /unauthorized:
     get:
       operationId: 'unauthorized'

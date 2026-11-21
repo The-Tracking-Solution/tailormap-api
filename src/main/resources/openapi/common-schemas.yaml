@@ -209,6 +209,10 @@ components:
         - hideLoginButton
         - enable3D
       properties:
+        personalStartPositionEnabled:
+          type: boolean
+          default: false
+          description: Allow personal start positions for local accounts in this application.
         hideLoginButton:
           nullable: false
           type: boolean

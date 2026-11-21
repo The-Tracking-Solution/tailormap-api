@@ -6,6 +6,7 @@
 
 package org.tailormap.api.configuration.ddl;
 
+import org.tailormap.api.configuration.TtsStartPositionMigrations;
 import org.springframework.boot.flyway.autoconfigure.FlywayMigrationStrategy;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -20,6 +21,9 @@ public class FlywayDefaultStrategy {
 
   @Bean
   public FlywayMigrationStrategy flywayMigrationStrategy() {
-    return flyway -> this.migrationResult.setMigrateResult(flyway.migrate());
+    return flyway -> {
+      this.migrationResult.setMigrateResult(flyway.migrate());
+      TtsStartPositionMigrations.migrate(flyway.getConfiguration().getDataSource());
+    };
   }
 }
