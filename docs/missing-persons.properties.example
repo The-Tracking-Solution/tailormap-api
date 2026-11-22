@@ -1,0 +1,21 @@
+# Copy into protected runtime configuration. Keep disabled until DEV wiring is verified.
+tailormap.missing.enabled=false
+tailormap.missing.url=${TTS_MISSING_JDBC_URL}
+tailormap.missing.username=${TTS_MISSING_JDBC_USERNAME}
+tailormap.missing.password=${TTS_MISSING_JDBC_PASSWORD}
+tailormap.missing.statistics-retention-days=365
+tailormap.missing.retain-exact-locations=true
+
+# Examples: replace group values with EXISTING Tailormap groups.
+tailormap.missing.organisations.heemskerk.label=Reddingsbrigade Heemskerk
+tailormap.missing.organisations.heemskerk.group=REPLACE_WITH_EXISTING_HEEMSKERK_GROUP
+tailormap.missing.organisations.wijk-aan-zee.label=Reddingsbrigade Wijk aan Zee
+tailormap.missing.organisations.wijk-aan-zee.group=REPLACE_WITH_EXISTING_WAZ_GROUP
+
+# Required for the maximum photo size; check existing attachment limits before changing.
+spring.servlet.multipart.max-file-size=10MB
+spring.servlet.multipart.max-request-size=11MB
+
+# Do not enable body/parameter tracing with operational data.
+logging.level.org.springframework.jdbc.core=INFO
+logging.level.org.springframework.web.servlet.mvc.method.annotation=INFO
